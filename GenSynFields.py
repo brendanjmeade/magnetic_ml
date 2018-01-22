@@ -29,29 +29,16 @@ def calc_observation_grid(x_bound, y_bound):
     return x_grid, y_grid
 
 
-# def calc_point_source_field(moment_vector, z_raw, x_grid, y_grid):
-#     '''Compute the field of a magnetic dipole point source'''
-#     z_observed = z_raw * LIFTOFF
-#     squared_distance = (x_grid**2.0 + y_grid**2.0 + z_observed**2.0)
-#     aux = (moment_vector[0] * x_grid +
-#            moment_vector[1] * y_grid +
-#            moment_vector[2] * z_observed) / \
-#            squared_distance**(5.0 / 2.0)
-#     bz_dip = MU0 / (4.0 * np.pi) * \
-#             (3.0 * aux * z_observed - moment_vector[2] / squared_distance**(3.0 / 2.0))
-#     return bz_dip
-
-def calc_point_source_field(point_source, z_raw, x_grid, y_grid):
+def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
-    i = 0
     z_observed = z_raw * LIFTOFF
-    squared_distance = (x_grid**2.0 + y_grid**2.0 + z_observed**2.0)
-    aux = (point_source['moment_vector'][i, 0] * x_grid +
-           point_source['moment_vector'][i, 1] * y_grid +
-           point_source['moment_vector'][i, 2] * z_observed) / \
+    squared_distance = ((x_grid-x_source)**2.0 + (y_grid-y_source)**2.0 + z_observed**2.0)
+    aux = (moment_vector[0] * x_grid +
+           moment_vector[1] * y_grid +
+           moment_vector[2] * z_observed) / \
            squared_distance**(5.0 / 2.0)
     bz_dip = MU0 / (4.0 * np.pi) * \
-            (3.0 * aux * z_observed - point_source['moment_vector'][i, 2] / squared_distance**(3.0 / 2.0))
+            (3.0 * aux * z_observed - moment_vector[2] / squared_distance**(3.0 / 2.0))
     return bz_dip
 
 
@@ -99,13 +86,16 @@ def main():
     x_grid, y_grid = calc_observation_grid(x_bound,
                                            y_bound)
 
-    # bz_dip = calc_point_source_field(moment_vector,
-    #                                  z_raw,
-    #                                  x_grid,
-    #                                  y_grid)
+    # TODO: Loop over point source for each element and add
+    bz_dip = calc_point_source_field(point_source['moment_vector'][0, :],
+                                     point_source['x_source'][0],
+                                     point_source['y_source'][0],
+                                     z_raw,
+                                     x_grid,
+                                     y_grid)
 
-    # plt.imshow(bz_dip)
-    # plt.show()
+    plt.imshow(bz_dip)
+    plt.show()
 
 
 if __name__ == '__main__':
