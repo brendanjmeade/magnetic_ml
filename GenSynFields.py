@@ -29,16 +29,29 @@ def calc_observation_grid(x_bound, y_bound):
     return x_grid, y_grid
 
 
-def calc_point_source_field(moment_vector, z_raw, x_grid, y_grid):
+# def calc_point_source_field(moment_vector, z_raw, x_grid, y_grid):
+#     '''Compute the field of a magnetic dipole point source'''
+#     z_observed = z_raw * LIFTOFF
+#     squared_distance = (x_grid**2.0 + y_grid**2.0 + z_observed**2.0)
+#     aux = (moment_vector[0] * x_grid +
+#            moment_vector[1] * y_grid +
+#            moment_vector[2] * z_observed) / \
+#            squared_distance**(5.0 / 2.0)
+#     bz_dip = MU0 / (4.0 * np.pi) * \
+#             (3.0 * aux * z_observed - moment_vector[2] / squared_distance**(3.0 / 2.0))
+#     return bz_dip
+
+def calc_point_source_field(point_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
+    i = 0
     z_observed = z_raw * LIFTOFF
     squared_distance = (x_grid**2.0 + y_grid**2.0 + z_observed**2.0)
-    aux = (moment_vector[0] * x_grid +
-           moment_vector[1] * y_grid +
-           moment_vector[2] * z_observed) / \
+    aux = (point_source['moment_vector'][i, 0] * x_grid +
+           point_source['moment_vector'][i, 1] * y_grid +
+           point_source['moment_vector'][i, 2] * z_observed) / \
            squared_distance**(5.0 / 2.0)
     bz_dip = MU0 / (4.0 * np.pi) * \
-            (3.0 * aux * z_observed - moment_vector[2] / squared_distance**(3.0 / 2.0))
+            (3.0 * aux * z_observed - point_source['moment_vector'][i, 2] / squared_distance**(3.0 / 2.0))
     return bz_dip
 
 
@@ -74,20 +87,14 @@ def gen_point_source_parameters(n_points, x_bound, y_bound):
 
 def main():
     '''Generate random fields'''
-    # Variables for current point source
-    n_points = 100
+    n_points = 1
     x_bound = 500.0e-6
     y_bound = x_bound
+    z_raw = 110 # microns
 
     point_source = gen_point_source_parameters(n_points,
                                                x_bound,
                                                y_bound)
-
-    print point_source.keys()
-    # declination = 18.0 # degrees
-    # inclination = -45.0 # degrees
-    z_raw = 110 # microns
-    # moment_scalar = 1.0e-13 # units???
 
     x_grid, y_grid = calc_observation_grid(x_bound,
                                            y_bound)
