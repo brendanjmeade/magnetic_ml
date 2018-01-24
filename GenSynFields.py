@@ -10,9 +10,19 @@ from IPython import get_ipython
 get_ipython().magic('reset -sf')
 plt.close('all')
 
+# Reasonable plotting standards
+from matplotlib import rc
+rc('text', usetex=True)
+font_size = 28
+rc('font', size=font_size)
+rc('axes', titlesize=font_size)
+line_width = 1.0
+tick_width = 0.5
+
 # Constants
 MU0 = 4 * np.pi * 1e-7
 LIFTOFF = 1e-6
+LEVELS = np.linspace(-1e-8, 1e-8, 20)
 
 
 def calc_dipole_parameters(declination, inclination, moment_scalar):
@@ -92,13 +102,30 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
                                         y_grid)
 
     plt.figure(num=None, figsize=(20, 20), dpi=80, facecolor='w', edgecolor='k')
-    plt.imshow(bz_dip)
+    # plt.imshow(bz_dip, cmap='bwr')
+    plt.contourf(x_grid, y_grid, bz_dip, cmap='bwr', levels=LEVELS)
+    plt.contour(x_grid, y_grid, bz_dip, '-k', levels=LEVELS, colors='k')
+    
+
+    plt.xlabel(r'$x \; \mathrm{(microns)}$', fontsize=font_size)
+    plt.ylabel(r'$y \; \mathrm{(microns)}$', fontsize=font_size)
+    plt.title(r'$n = NNN$', fontsize=font_size)
+    # Make ticks look reasonable
+    ax = plt.gca()
+    for axis in ['top','bottom','left','right']:
+        ax.spines[axis].set_linewidth(tick_width)
+    ax.xaxis.set_tick_params(width=tick_width)
+    ax.yaxis.set_tick_params(width=tick_width)
+    plt.tick_params(axis='x', direction='out')
+    plt.tick_params(axis='y', direction='out')
+    # plt.colorbar(fraction=0.046, pad=0.04)
+
     plt.show()
     return point_source
 
 def main():
     '''Generate random fields'''
-    n_points = 50
+    n_points = 1
     x_bound = 500.0e-6
     y_bound = x_bound
     z_raw = 110 # microns
