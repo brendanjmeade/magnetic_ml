@@ -1,8 +1,14 @@
-'''Converstion of Roger's Matlab script to python'''
+'''
+Generate a catalog of syntetic images of mulitple
+monolpoles. Based on Roger Fu's Matlab script
+'''
+
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython import get_ipython
 get_ipython().magic('reset -sf')
+plt.close('all')
 
 # Constants
 MU0 = 4 * np.pi * 1e-7
@@ -32,9 +38,11 @@ def calc_observation_grid(x_bound, y_bound):
 def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
     z_observed = z_raw * LIFTOFF
-    squared_distance = ((x_grid-x_source)**2.0 + (y_grid-y_source)**2.0 + z_observed**2.0)
-    aux = (moment_vector[0] * x_grid +
-           moment_vector[1] * y_grid +
+    # squared_distance = ((x_grid-x_source)**2.0 + (y_grid-y_source)**2.0 + z_observed**2.0)
+    squared_distance = ((x_grid)**2.0 + (y_grid)**2.0 + z_observed**2.0)
+    
+    aux = (moment_vector[0] * (x_grid) +
+           moment_vector[1] * (y_grid) +
            moment_vector[2] * z_observed) / \
            squared_distance**(5.0 / 2.0)
     bz_dip = MU0 / (4.0 * np.pi) * \
@@ -72,31 +80,45 @@ def gen_point_source_parameters(n_points, x_bound, y_bound):
 
     return point_source
 
+def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
+    bz_dip = np.zeros(x_grid.shape)
+    for i in range(point_source['moment_scalar'].size):
+        print i
+        bz_dip += calc_point_source_field(point_source['moment_vector'][i, :],
+                                        point_source['x_source'][i],
+                                        point_source['y_source'][i],
+                                        z_raw,
+                                        x_grid,
+                                        y_grid)
+
+    plt.figure(num=None, figsize=(20, 20), dpi=80, facecolor='w', edgecolor='k')
+    plt.imshow(bz_dip)
+    plt.show()
+    return point_source
+
 def main():
     '''Generate random fields'''
-    n_points = 1
+    n_points = 50
     x_bound = 500.0e-6
     y_bound = x_bound
     z_raw = 110 # microns
+
+    x_grid, y_grid = calc_observation_grid(x_bound,
+                                           y_bound)
 
     point_source = gen_point_source_parameters(n_points,
                                                x_bound,
                                                y_bound)
 
-    x_grid, y_grid = calc_observation_grid(x_bound,
-                                           y_bound)
+    point_source = field_from_point_source_dict(point_source,
+                                                x_grid,
+                                                y_grid,
+                                                z_raw)
 
-    # TODO: Loop over point source for each element and add
-    bz_dip = calc_point_source_field(point_source['moment_vector'][0, :],
-                                     point_source['x_source'][0],
-                                     point_source['y_source'][0],
-                                     z_raw,
-                                     x_grid,
-                                     y_grid)
 
-    plt.imshow(bz_dip)
-    plt.show()
-
+    pickle_out = open('point_source.pkl', 'wb')
+    pickle.dump(point_source, pickle_out)
+    pickle_out.close()
 
 if __name__ == '__main__':
     main()
