@@ -4,6 +4,7 @@ monolpoles. Based on Roger Fu's Matlab script
 '''
 
 import pickle
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython import get_ipython
@@ -13,7 +14,8 @@ plt.close('all')
 # Reasonable plotting standards
 from matplotlib import rc
 rc('text', usetex=True)
-font_size = 28
+matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+font_size = 32
 rc('font', size=font_size)
 rc('axes', titlesize=font_size)
 line_width = 1.0
@@ -103,13 +105,15 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
 
     plt.figure(num=None, figsize=(20, 20), dpi=80, facecolor='w', edgecolor='k')
     # plt.imshow(bz_dip, cmap='bwr')
-    plt.contourf(x_grid, y_grid, bz_dip, cmap='bwr', levels=LEVELS)
+    CS = plt.contourf(x_grid, y_grid, bz_dip, cmap='bwr', levels=LEVELS, extend='both')
+    CS.cmap.set_under('blue')
+    CS.cmap.set_over('red')
     plt.contour(x_grid, y_grid, bz_dip, '-k', levels=LEVELS, colors='k')
     
 
     plt.xlabel(r'$x \; \mathrm{(microns)}$', fontsize=font_size)
     plt.ylabel(r'$y \; \mathrm{(microns)}$', fontsize=font_size)
-    plt.title(r'$n = NNN$', fontsize=font_size)
+    plt.title(r'$\mathrm{TBD}$', fontsize=font_size)
     # Make ticks look reasonable
     ax = plt.gca()
     for axis in ['top','bottom','left','right']:
