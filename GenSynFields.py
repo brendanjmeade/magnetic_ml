@@ -31,6 +31,11 @@ def calc_dipole_parameters(declination, inclination, moment_scalar):
     '''Magnetization direction and dipole strength'''
     theta = np.deg2rad(-inclination + 90)
     phi = np.deg2rad(-declination + 90)
+
+    moment_scalar = 1e-13
+    theta = np.deg2rad(-45)
+    phi = np.deg2rad(-45)
+
     moment_vector = np.zeros(3)
     moment_vector[0] = moment_scalar * np.sin(theta) * np.cos(phi)
     moment_vector[1] = moment_scalar * np.sin(theta) * np.sin(phi)
@@ -50,11 +55,10 @@ def calc_observation_grid(x_bound, y_bound):
 def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
     z_observed = z_raw * LIFTOFF
-    # squared_distance = ((x_grid-x_source)**2.0 + (y_grid-y_source)**2.0 + z_observed**2.0)
-    squared_distance = ((x_grid)**2.0 + (y_grid)**2.0 + z_observed**2.0)
+    squared_distance = ((x_grid-x_source)**2.0 + (y_grid-y_source)**2.0 + z_observed**2.0)
     
-    aux = (moment_vector[0] * (x_grid) +
-           moment_vector[1] * (y_grid) +
+    aux = (moment_vector[0] * (x_grid - x_source) +
+           moment_vector[1] * (y_grid - y_source) +
            moment_vector[2] * z_observed) / \
            squared_distance**(5.0 / 2.0)
     bz_dip = MU0 / (4.0 * np.pi) * \
