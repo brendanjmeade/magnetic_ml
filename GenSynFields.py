@@ -41,10 +41,10 @@ def calc_dipole_parameters(declination, inclination, moment_scalar):
 
 def calc_observation_grid(x_bound, y_bound):
     '''Generate observation coordinates'''
-    n_x_points = 251
-    n_y_points = 251
-    x_grid, y_grid = np.meshgrid(np.linspace(-x_bound, x_bound, n_x_points),
-                                 np.linspace(-y_bound, y_bound, n_y_points))
+    n_x_points = 256 * 3
+    n_y_points = 256 * 3
+    x_grid, y_grid = np.meshgrid(np.linspace(-3 * x_bound, 3 * x_bound, n_x_points),
+                                 np.linspace(-3 * y_bound, 3 * y_bound, n_y_points))
     return x_grid, y_grid
 
 
