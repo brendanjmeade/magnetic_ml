@@ -121,7 +121,7 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
 
     plt.xlabel(r'$x \; \mathrm{(microns)}$', fontsize=font_size)
     plt.ylabel(r'$y \; \mathrm{(microns)}$', fontsize=font_size)
-    plt.title(r'$\mathrm{TBD}$', fontsize=font_size)
+    plt.title(r'$\mathrm{}$', fontsize=font_size)
     # Make ticks look reasonable
     ax = plt.gca()
     for axis in ['top','bottom','left','right']:
