@@ -4,15 +4,15 @@ monolpoles. Based on Roger Fu's Matlab script
 '''
 
 import pickle
-import matplotlib
 import numpy as np
+import matplotlib
+from matplotlib import rc
 import matplotlib.pyplot as plt
 from IPython import get_ipython
 get_ipython().magic('reset -sf')
 plt.close('all')
 
 # Reasonable plotting standards
-from matplotlib import rc
 rc('text', usetex=True)
 matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 font_size = 32
@@ -31,10 +31,6 @@ def calc_dipole_parameters(declination, inclination, moment_scalar):
     '''Magnetization direction and dipole strength'''
     theta = np.deg2rad(-inclination + 90)
     phi = np.deg2rad(-declination + 90)
-
-    # moment_scalar = 1e-13
-    # theta = np.deg2rad(-45)
-    # phi = np.deg2rad(-45)
 
     moment_vector = np.zeros(3)
     moment_vector[0] = moment_scalar * np.sin(theta) * np.cos(phi)
@@ -58,7 +54,7 @@ def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_
     squared_distance = (x_grid-x_source)**2.0 + \
                        (y_grid-y_source)**2.0 + \
                        z_observed**2.0
-    
+
     aux = (moment_vector[0] * (x_grid - x_source) +
            moment_vector[1] * (y_grid - y_source) +
            moment_vector[2] * z_observed) / \
@@ -138,7 +134,7 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
 def main():
     '''Generate random fields'''
     n_points = 500
-    x_bound = 500.0e-6
+    x_bound = 500.0e-6 # microns
     y_bound = x_bound
     z_raw = 110 # microns
 
