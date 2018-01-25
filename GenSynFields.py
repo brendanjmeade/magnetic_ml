@@ -5,6 +5,7 @@ monolpoles. Based on Roger Fu's Matlab script
 
 import pickle
 import numpy as np
+from numba import jit
 import matplotlib
 from matplotlib import rc
 import matplotlib.pyplot as plt
@@ -48,6 +49,7 @@ def calc_observation_grid(x_bound, y_bound):
     return x_grid, y_grid
 
 
+@jit
 def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
     z_observed = z_raw * LIFTOFF
@@ -87,7 +89,7 @@ def gen_point_source_parameters(n_points, x_bound, y_bound):
     point_source['moment_scalar'] = np.random.uniform(1e-14,
                                                       1e-12,
                                                       n_points)
-    
+
     point_source['moment_vector'] = np.zeros((n_points, 3))
     for i in range(n_points):
         point_source['moment_vector'][i, :] = calc_dipole_parameters(point_source['declination'][i],
@@ -97,42 +99,41 @@ def gen_point_source_parameters(n_points, x_bound, y_bound):
     return point_source
 
 def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
+    '''Calculate and sum the point sources from the point_source dict'''
     bz_dip = np.zeros(x_grid.shape)
     for i in range(point_source['moment_scalar'].size):
-        print i
         bz_dip += calc_point_source_field(point_source['moment_vector'][i, :],
-                                        point_source['x_source'][i],
-                                        point_source['y_source'][i],
-                                        z_raw,
-                                        x_grid,
-                                        y_grid)
+                                          point_source['x_source'][i],
+                                          point_source['y_source'][i],
+                                          z_raw,
+                                          x_grid,
+                                          y_grid)
 
-    plt.figure(num=None, figsize=(20, 20), dpi=80, facecolor='w', edgecolor='k')
-    # plt.imshow(bz_dip, cmap='bwr')
-    CS = plt.contourf(x_grid, y_grid, bz_dip, cmap='bwr', levels=LEVELS, extend='both')
-    CS.cmap.set_under('blue')
-    CS.cmap.set_over('red')
-    plt.contour(x_grid, y_grid, bz_dip, '-k', levels=LEVELS, colors='k')
-    
+    # plt.figure(num=None, figsize=(20, 20), dpi=80, facecolor='w', edgecolor='k')
+    # CS = plt.contourf(x_grid, y_grid, bz_dip, cmap='bwr', levels=LEVELS, extend='both')
+    # CS.cmap.set_under('blue')
+    # CS.cmap.set_over('red')
+    # plt.contour(x_grid, y_grid, bz_dip, '-k', levels=LEVELS, colors='k')
 
-    plt.xlabel(r'$x \; \mathrm{(microns)}$', fontsize=font_size)
-    plt.ylabel(r'$y \; \mathrm{(microns)}$', fontsize=font_size)
-    plt.title(r'$\mathrm{}$', fontsize=font_size)
-    # Make ticks look reasonable
-    ax = plt.gca()
-    for axis in ['top','bottom','left','right']:
-        ax.spines[axis].set_linewidth(tick_width)
-    ax.xaxis.set_tick_params(width=tick_width)
-    ax.yaxis.set_tick_params(width=tick_width)
-    plt.tick_params(axis='x', direction='out')
-    plt.tick_params(axis='y', direction='out')
-    # plt.colorbar(fraction=0.046, pad=0.04)
 
-    plt.show()
+    # plt.xlabel(r'$x \; \mathrm{(microns)}$', fontsize=font_size)
+    # plt.ylabel(r'$y \; \mathrm{(microns)}$', fontsize=font_size)
+    # plt.title(r'$\mathrm{}$', fontsize=font_size)
+
+    # ax = plt.gca()
+    # for axis in ['top', 'bottom', 'left', 'right']:
+    #     ax.spines[axis].set_linewidth(tick_width)
+    # ax.xaxis.set_tick_params(width=tick_width)
+    # ax.yaxis.set_tick_params(width=tick_width)
+    # plt.tick_params(axis='x', direction='out')
+    # plt.tick_params(axis='y', direction='out')
+
+    # plt.show()
     return point_source
 
 def main():
     '''Generate random fields'''
+    n_fields = 100000
     n_points = 500
     x_bound = 500.0e-6 # microns
     y_bound = x_bound
@@ -141,19 +142,23 @@ def main():
     x_grid, y_grid = calc_observation_grid(x_bound,
                                            y_bound)
 
-    point_source = gen_point_source_parameters(n_points,
-                                               x_bound,
-                                               y_bound)
+    all_fields = list()
+    for i in range(n_fields):
+        print i+1
+        point_source = gen_point_source_parameters(n_points,
+                                                   x_bound,
+                                                   y_bound)
 
-    point_source = field_from_point_source_dict(point_source,
-                                                x_grid,
-                                                y_grid,
-                                                z_raw)
+        point_source = field_from_point_source_dict(point_source,
+                                                    x_grid,
+                                                    y_grid,
+                                                    z_raw)
+        all_fields.append(point_source)
 
-
-    pickle_out = open('point_source.pkl', 'wb')
-    pickle.dump(point_source, pickle_out)
+    pickle_out = open('all_fields.pkl', 'wb')
+    pickle.dump(all_fields, pickle_out)
     pickle_out.close()
+
 
 if __name__ == '__main__':
     main()
