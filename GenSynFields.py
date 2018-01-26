@@ -5,7 +5,6 @@ monolpoles. Based on Roger Fu's Matlab script
 
 import pickle
 import numpy as np
-from numba import jit
 import matplotlib
 from matplotlib import rc
 import matplotlib.pyplot as plt
@@ -49,7 +48,6 @@ def calc_observation_grid(x_bound, y_bound):
     return x_grid, y_grid
 
 
-@jit
 def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
     z_observed = z_raw * LIFTOFF
@@ -133,7 +131,7 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
 
 def main():
     '''Generate random fields'''
-    n_fields = 100000
+    n_fields = 10000
     n_points = 500
     x_bound = 500.0e-6 # microns
     y_bound = x_bound
