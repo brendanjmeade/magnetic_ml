@@ -127,6 +127,7 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
     # plt.tick_params(axis='y', direction='out')
 
     # plt.show()
+    point_source['bz_dip'] = bz_dip
     return point_source
 
 def main():
