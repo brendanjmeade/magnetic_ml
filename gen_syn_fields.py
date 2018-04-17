@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib
 from matplotlib import rc
 import matplotlib.pyplot as plt
-from IPython import get_ipython
-get_ipython().magic('reset -sf')
-plt.close('all')
+# from IPython import get_ipython
+# get_ipython().magic('reset -sf')
+# plt.close('all')
 
 # Reasonable plotting standards
 rc('text', usetex=True)
@@ -41,8 +41,8 @@ def calc_dipole_parameters(declination, inclination, moment_scalar):
 
 def calc_observation_grid(x_bound, y_bound):
     '''Generate observation coordinates'''
-    n_x_points = 256 * 3
-    n_y_points = 256 * 3
+    n_x_points = 64
+    n_y_points = 64
     x_grid, y_grid = np.meshgrid(np.linspace(-3 * x_bound, 3 * x_bound, n_x_points),
                                  np.linspace(-3 * y_bound, 3 * y_bound, n_y_points))
     return x_grid, y_grid
@@ -107,57 +107,48 @@ def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
                                           x_grid,
                                           y_grid)
 
-    # plt.figure(num=None, figsize=(20, 20), dpi=80, facecolor='w', edgecolor='k')
-    # CS = plt.contourf(x_grid, y_grid, bz_dip, cmap='bwr', levels=LEVELS, extend='both')
-    # CS.cmap.set_under('blue')
-    # CS.cmap.set_over('red')
-    # plt.contour(x_grid, y_grid, bz_dip, '-k', levels=LEVELS, colors='k')
-
-
-    # plt.xlabel(r'$x \; \mathrm{(microns)}$', fontsize=font_size)
-    # plt.ylabel(r'$y \; \mathrm{(microns)}$', fontsize=font_size)
-    # plt.title(r'$\mathrm{}$', fontsize=font_size)
-
-    # ax = plt.gca()
-    # for axis in ['top', 'bottom', 'left', 'right']:
-    #     ax.spines[axis].set_linewidth(tick_width)
-    # ax.xaxis.set_tick_params(width=tick_width)
-    # ax.yaxis.set_tick_params(width=tick_width)
-    # plt.tick_params(axis='x', direction='out')
-    # plt.tick_params(axis='y', direction='out')
-
-    # plt.show()
     point_source['bz_dip'] = bz_dip
     return point_source
 
+
+def calc_feature_labels(field, n_bins):
+    _, bins, _ = plt.hist(field, n_bins, facecolor='green')
+    return np.digitize(field, bins)
+
+
 def main():
     '''Generate random fields'''
-    n_fields = 10000
-    n_points = 500
+    n_fields = 1000
+    n_points = 50
     x_bound = 500.0e-6 # microns
     y_bound = x_bound
     z_raw = 110 # microns
+    n_bins = 10
+    x_grid, y_grid = calc_observation_grid(x_bound, y_bound)
 
-    x_grid, y_grid = calc_observation_grid(x_bound,
-                                           y_bound)
+    frames_bzdip = np.zeros((n_fields, 64, 64))
+    frames_moment_scalar_sum = np.zeros(n_fields)
+    frames_moment_vector_sum = np.zeros((n_fields, 3))
+    frames_moment_vector_sum_labels = np.zeros((n_fields, 3))
 
-    all_fields = list()
     for i in range(n_fields):
-        print i+1
-        point_source = gen_point_source_parameters(n_points,
-                                                   x_bound,
-                                                   y_bound)
+        print(i+1)
+        point_source = gen_point_source_parameters(n_points, x_bound, y_bound)
+        point_source = field_from_point_source_dict(point_source, x_grid, y_grid, z_raw)
+        frames_bzdip[i, :, :] = point_source['bz_dip']
+        frames_moment_scalar_sum[i] = np.sum(point_source['moment_scalar'])
+        frames_moment_vector_sum[i, :] = np.sum(point_source['moment_vector'], 0)
 
-        point_source = field_from_point_source_dict(point_source,
-                                                    x_grid,
-                                                    y_grid,
-                                                    z_raw)
-        all_fields.append(point_source)
-
-    pickle_out = open('all_fields.pkl', 'wb')
-    pickle.dump(all_fields, pickle_out)
-    pickle_out.close()
-
+    # Histograms and quantized labels
+    frames_moment_scalar_sum_labels = calc_feature_labels(frames_moment_scalar_sum, n_bins)
+    frames_moment_vector_sum_labels[:, 0] = calc_feature_labels(frames_moment_vector_sum[:, 0], n_bins)
+    frames_moment_vector_sum_labels[:, 1] = calc_feature_labels(frames_moment_vector_sum[:, 1], n_bins)
+    frames_moment_vector_sum_labels[:, 2] = calc_feature_labels(frames_moment_vector_sum[:, 2], n_bins)
+    frames_moment_scalar_sum_labels = frames_moment_scalar_sum_labels.astype(int)
+    frames_moment_vector_sum_labels = frames_moment_vector_sum_labels.astype(int)
+    
+    np.savez('synthetics.npz', frames_bzdip, frames_moment_scalar_sum, frames_moment_vector_sum,
+             frames_moment_scalar_sum_labels, frames_moment_vector_sum_labels)
 
 if __name__ == '__main__':
     main()
