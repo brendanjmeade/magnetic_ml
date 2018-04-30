@@ -8,18 +8,6 @@ import numpy as np
 import matplotlib
 from matplotlib import rc
 import matplotlib.pyplot as plt
-# from IPython import get_ipython
-# get_ipython().magic('reset -sf')
-# plt.close('all')
-
-# Reasonable plotting standards
-rc('text', usetex=True)
-matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
-font_size = 32
-rc('font', size=font_size)
-rc('axes', titlesize=font_size)
-line_width = 1.0
-tick_width = 0.5
 
 # Constants
 MU0 = 4 * np.pi * 1e-7
@@ -43,8 +31,8 @@ def calc_observation_grid(x_bound, y_bound):
     '''Generate observation coordinates'''
     n_x_points = 64
     n_y_points = 64
-    x_grid, y_grid = np.meshgrid(np.linspace(-3 * x_bound, 3 * x_bound, n_x_points),
-                                 np.linspace(-3 * y_bound, 3 * y_bound, n_y_points))
+    x_grid, y_grid = np.meshgrid(np.linspace(-2 * x_bound, 2 * x_bound, n_x_points),
+                                 np.linspace(-2 * y_bound, 2 * y_bound, n_y_points))
     return x_grid, y_grid
 
 
@@ -118,7 +106,7 @@ def calc_feature_labels(field, n_bins):
 
 def main():
     '''Generate random fields'''
-    n_fields = 1000
+    n_fields = 1000000
     n_points = 50
     x_bound = 500.0e-6 # microns
     y_bound = x_bound
@@ -140,14 +128,12 @@ def main():
         frames_moment_vector_sum[i, :] = np.sum(point_source['moment_vector'], 0)
 
     # Histograms and quantized labels
-    frames_moment_scalar_sum_labels = calc_feature_labels(frames_moment_scalar_sum, n_bins)
-    frames_moment_vector_sum_labels[:, 0] = calc_feature_labels(frames_moment_vector_sum[:, 0], n_bins)
-    frames_moment_vector_sum_labels[:, 1] = calc_feature_labels(frames_moment_vector_sum[:, 1], n_bins)
-    frames_moment_vector_sum_labels[:, 2] = calc_feature_labels(frames_moment_vector_sum[:, 2], n_bins)
-    frames_moment_scalar_sum_labels = frames_moment_scalar_sum_labels.astype(int)
-    frames_moment_vector_sum_labels = frames_moment_vector_sum_labels.astype(int)
+    frames_moment_scalar_sum_labels = calc_feature_labels(frames_moment_scalar_sum, n_bins).astype(int)
+    frames_moment_vector_sum_labels[:, 0] = calc_feature_labels(frames_moment_vector_sum[:, 0], n_bins).astype(int)
+    frames_moment_vector_sum_labels[:, 1] = calc_feature_labels(frames_moment_vector_sum[:, 1], n_bins).astype(int)
+    frames_moment_vector_sum_labels[:, 2] = calc_feature_labels(frames_moment_vector_sum[:, 2], n_bins).astype(int)
     
-    np.savez('synthetics.npz', frames_bzdip, frames_moment_scalar_sum, frames_moment_vector_sum,
+    np.savez('synthetics_100000.npz', frames_bzdip, frames_moment_scalar_sum, frames_moment_vector_sum,
              frames_moment_scalar_sum_labels, frames_moment_vector_sum_labels)
 
 if __name__ == '__main__':
