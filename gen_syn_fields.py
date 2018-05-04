@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # Constants
 MU0 = 4 * np.pi * 1e-7
-LIFTOFF = 1e-6
+LIFTOFF = 1e-6 # Roger sez this should be: 5e-6
 LEVELS = np.linspace(-1e-6, 1e-6, 30)
 
 
@@ -107,14 +107,14 @@ def calc_feature_labels(field, n_bins):
 def main():
     '''Generate random fields'''
     n_fields = 1000000
-    n_points = 50
-    x_bound = 500.0e-6 # microns
+    n_points = 50 # Roger says 2400
+    x_bound = 500.0e-6 # microns, Roger says make this 50-100 microns
     y_bound = x_bound
-    z_raw = 110 # microns
-    n_bins = 10
+    z_raw = 110 # microns, -z-coordinate: make a volume 0-30 
+    n_bins = 10 # Roger wants 1 degree...I say 10 degrees
     x_grid, y_grid = calc_observation_grid(x_bound, y_bound)
 
-    frames_bzdip = np.zeros((n_fields, 64, 64))
+    frames_bzdip = np.zeros((n_fields, 64, 64)) # make 300x300
     frames_moment_scalar_sum = np.zeros(n_fields)
     frames_moment_vector_sum = np.zeros((n_fields, 3))
     frames_moment_vector_sum_labels = np.zeros((n_fields, 3))

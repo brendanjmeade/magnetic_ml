@@ -2,7 +2,9 @@ import copy
 import sys
 import keras
 import numpy as np
+import matplotlib 
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from keras.models import Sequential
 from keras.models import load_model
 from keras.layers import Dense, Dropout, Flatten
@@ -14,6 +16,7 @@ OUTPUT_FILE_NAME = 'features_and_labels.npz'
 KEEP_NUMBER = 20000
 KEEP_IDX = [3, 4, 5, 6, 7, 8]
 PIXELS = 64
+FONT_SIZE = 14
 
 
 def balance_classes():
@@ -158,8 +161,33 @@ def learn_simple():
              y_validate = y_validate)
 
 
+def learn_noisy():
+    '''Train over noisy data and assess recoverability'''
+    batch_size = 128
+    epochs = 2
+    noise_levels = 0
+
+    model = build_model()
+    x_train, y_train, x_test, y_test, x_validate, y_validate = shape_training_data()
+
+    # Loop over noise
+    for i in range(noise_levels):
+        # Add noise to x_train and x_validate
+
+        # Train and test
+        model.fit(x_train, y_train,
+                batch_size=batch_size,
+                epochs=epochs,
+                verbose=1,
+                validation_data=(x_test, y_test))
+        score = model.evaluate(x_test, y_test, verbose=1)
+        print('Test loss:', score[0])
+        print('Test accuracy:', score[1])
+
+
 def predict_simple():
     '''Predictions/inference from a single run'''
+    #TODO: fix variable names.  Plot as a single figure
 
     model = load_model('learn_simple.h5')
 
@@ -195,7 +223,8 @@ def predict_simple():
 
     simple_metric = np.zeros(KEEP_NUMBER)
     for i in range(0, KEEP_NUMBER):
-        simple_metric[i] = np.sum(frames_balanced[i, :, :]**10.0)
+        # simple_metric[i] = np.sum(frames_balanced[i, :, :]**10.0)
+        simple_metric[i] = np.max(frames_balanced[i, :, :])
 
     fig = plt.figure()
     _, bins, _ = plt.hist(simple_metric, 6, facecolor='green')
@@ -211,11 +240,53 @@ def predict_simple():
     plt.show(block=False)
 
 
+def plot_field():
+    '''Simple visualization'''
+    idx = 10
+    
+    with np.load('features_and_labels.npz') as data:
+        labels_balanced = data['labels_balanced']
+        frames_balanced = data['frames_balanced']
+        _frames_original = data['frames_original']
+
+    min_val = np.min(frames_balanced)
+    max_val = np.max(frames_balanced)
+    cbar_val = np.max(np.array([np.abs(min_val), max_val]))
+    scale_factor = np.round(np.log10(cbar_val))
+    cbar_val = cbar_val / (10**scale_factor)
+
+    plt.imshow(frames_balanced[idx, :, :] / 10**(scale_factor),
+               interpolation='nearest',
+               cmap=cm.coolwarm,
+               origin='lower')
+    plt.clim(-cbar_val, cbar_val)
+    plt.plot(np.array([-50, 50, 50, -50, -50])*PIXELS/200 + PIXELS/2,
+             np.array([-50, -50, 50, 50, -50])*PIXELS/200 + PIXELS/2,
+             '--k',
+             linewidth=1.0)
+    plt.xticks([0, PIXELS-1], ['-100', '100'])
+    plt.yticks([0, PIXELS-1], ['-100', '100'])
+    plt.xlabel('$x \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    plt.ylabel('$y \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    
+    matplotlib.rc('xtick', labelsize=FONT_SIZE) #WTF.  Why does +20 work? 
+    matplotlib.rc('ytick', labelsize=FONT_SIZE) 
+
+    cbar = plt.colorbar(ticks=[-cbar_val, 0, cbar_val])
+    exponent_string = '$10^{' + str(scale_factor) + '}$' 
+    cbar.ax.set_ylabel(r'field strength (units ' + r'$\times$' + ' ' + exponent_string + ')', fontsize=14, rotation=90)
+    cbar.ax.tick_params(labelsize=14) 
+    plt.title('$\mathrm{label} \; = \; $' + str(labels_balanced[idx]), fontsize=14)
+    plt.show(block=False)
+
+
 def main():
     # balance_classes()
     # learn_simple()
-    predict_simple()
-
+    plot_field()
+    # predict_simple()
+    # learn_noisy()
+    
 
 if __name__ == '__main__':
     main()
