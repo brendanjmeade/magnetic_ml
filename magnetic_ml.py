@@ -192,51 +192,54 @@ def predict_simple():
     model = load_model('learn_simple.h5')
 
     with np.load('features_and_labels.npz') as data:
-        labels_balanced = data['labels_balanced']
+        _labels_balanced = data['labels_balanced']
         frames_balanced = data['frames_balanced']
         _frames_original = data['frames_original']
 
     with np.load('learn_simple.npz') as data:
         x_train = data['x_train']
         y_train = data['y_train']
-        x_test = data['x_test']
-        y_test = data['y_test']
-        x_validate = data['x_validate']
-        y_validate = data['y_validate']
+        _x_test = data['x_test']
+        _y_test = data['y_test']
+        _x_validate = data['x_validate']
+        _y_validate = data['y_validate']
 
+    hist_bins = np.arange(0, len(KEEP_IDX), 1)
     predict_labels = model.predict(x_train)
     true = np.argmax(y_train, axis=1)
     vals = np.argmax(predict_labels, axis=1)
     R = np.corrcoef(true, vals)
 
-    fig = plt.figure()
-    plt.plot(vals-true, 'r+')
-    plt.title('correlation = ' + '{:f}'.format(R[1, 0]))
-    plt.xlabel('true')
-    plt.ylabel('prediction')
-
-    fig = plt.figure()
-    plt.hist(vals-true)
-    plt.title('correlation = ' + '{:f}'.format(R[1, 0]))
-    plt.xlabel('true')
-    plt.ylabel('prediction')
-
-    simple_metric = np.zeros(KEEP_NUMBER)
+    simple_metric_max = np.zeros(KEEP_NUMBER)
+    simple_metric_sum = np.zeros(KEEP_NUMBER)
     for i in range(0, KEEP_NUMBER):
-        # simple_metric[i] = np.sum(frames_balanced[i, :, :]**10.0)
-        simple_metric[i] = np.max(frames_balanced[i, :, :])
+        simple_metric_sum[i] = np.sum(frames_balanced[i, :, :]**2.0)
+        simple_metric_max[i] = np.max(frames_balanced[i, :, :])
 
-    fig = plt.figure()
-    _, bins, _ = plt.hist(simple_metric, 6, facecolor='green')
+    _, bins, _ = plt.hist(simple_metric_max, facecolor='green', bins=len(KEEP_IDX))
+    plt.close()
+    simple_metric_labels = np.digitize(simple_metric_max, bins)
+    simple_metric_labels = simple_metric_labels[0:10000]
+    
+    R = np.corrcoef(simple_metric_labels, vals)
 
-    simple_metric_labels = np.digitize(simple_metric, bins)
-    R = np.corrcoef(simple_metric_labels[0:10000], vals)
-    fig = plt.figure()
-    plt.plot(vals-simple_metric_labels[0:10000], 'r+')
-    plt.title('correlation = ' + '{:f}'.format(R[1, 0]))
-    plt.xlabel('true')
-    plt.ylabel('prediction')
+    plt.figure()
+    matplotlib.rc('xtick', labelsize=FONT_SIZE) 
+    matplotlib.rc('ytick', labelsize=FONT_SIZE) 
+    plt.hist(vals-true,
+             bins=hist_bins,
+             align='left',
+             histtype='stepfilled',
+             alpha = 0.5)
 
+    plt.hist(np.abs(simple_metric_labels-vals),
+             facecolor='green',
+             bins=hist_bins,
+             align='left',
+             histtype='stepfilled', alpha=0.5)
+    plt.title('correlation = ' + '{:f}'.format(R[1, 0]), fontsize=FONT_SIZE)
+    plt.xlabel('label error', fontsize=FONT_SIZE)
+    plt.ylabel('$N$', fontsize=FONT_SIZE)
     plt.show(block=False)
 
 
@@ -269,7 +272,7 @@ def plot_field():
     plt.xlabel('$x \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
     plt.ylabel('$y \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
     
-    matplotlib.rc('xtick', labelsize=FONT_SIZE) #WTF.  Why does +20 work? 
+    matplotlib.rc('xtick', labelsize=FONT_SIZE) 
     matplotlib.rc('ytick', labelsize=FONT_SIZE) 
 
     cbar = plt.colorbar(ticks=[-cbar_val, 0, cbar_val])
@@ -283,8 +286,8 @@ def plot_field():
 def main():
     # balance_classes()
     # learn_simple()
-    plot_field()
-    # predict_simple()
+    # plot_field()
+    predict_simple()
     # learn_noisy()
     
 
