@@ -208,7 +208,7 @@ def predict_simple():
     predict_labels = model.predict(x_train)
     true = np.argmax(y_train, axis=1)
     vals = np.argmax(predict_labels, axis=1)
-    R = np.corrcoef(true, vals)
+    correlation_nn = np.corrcoef(true, vals)
 
     simple_metric_max = np.zeros(KEEP_NUMBER)
     simple_metric_sum = np.zeros(KEEP_NUMBER)
@@ -218,28 +218,69 @@ def predict_simple():
 
     _, bins, _ = plt.hist(simple_metric_max, facecolor='green', bins=len(KEEP_IDX))
     plt.close()
-    simple_metric_labels = np.digitize(simple_metric_max, bins)
-    simple_metric_labels = simple_metric_labels[0:10000]
-    
-    R = np.corrcoef(simple_metric_labels, vals)
+    simple_metric_labels_max = np.digitize(simple_metric_max, bins)
+    simple_metric_labels_max = simple_metric_labels_max[0:10000]
+    correlation_max = np.corrcoef(simple_metric_labels_max, vals)
 
-    plt.figure()
+    _, bins, _ = plt.hist(simple_metric_sum, facecolor='green', bins=len(KEEP_IDX))
+    plt.close()
+    simple_metric_labels_sum = np.digitize(simple_metric_sum, bins)
+    simple_metric_labels_sum = simple_metric_labels_sum[0:10000]
+    correlation_sum = np.corrcoef(simple_metric_labels_sum, vals)
+
+    plt.figure(figsize=(8, 12))
     matplotlib.rc('xtick', labelsize=FONT_SIZE) 
-    matplotlib.rc('ytick', labelsize=FONT_SIZE) 
-    plt.hist(vals-true,
+    matplotlib.rc('ytick', labelsize=FONT_SIZE)
+
+    ax = plt.subplot(3, 1, 1)
+    ax_nn = plt.hist(vals-true,
              bins=hist_bins,
+             edgecolor='red',
+             facecolor='red',
              align='left',
              histtype='stepfilled',
-             alpha = 0.5)
-
-    plt.hist(np.abs(simple_metric_labels-vals),
-             facecolor='green',
-             bins=hist_bins,
-             align='left',
-             histtype='stepfilled', alpha=0.5)
-    plt.title('correlation = ' + '{:f}'.format(R[1, 0]), fontsize=FONT_SIZE)
+             alpha = 0.25,
+             linewidth=2.0)
+    plt.title('neural network, ' + r'$R = $' \
+              + '{:.2f}'.format(correlation_nn[1, 0]),
+              fontsize=FONT_SIZE)
     plt.xlabel('label error', fontsize=FONT_SIZE)
     plt.ylabel('$N$', fontsize=FONT_SIZE)
+    plt.ylim(0, 10500)
+
+    ax = plt.subplot(3, 1, 2)
+    ax_max = plt.hist(np.abs(simple_metric_labels_max-vals),
+             bins=hist_bins,
+             edgecolor='green',
+             facecolor='green',
+             align='left',
+             histtype='stepfilled',
+             alpha=0.25,
+             linewidth=2.0)
+    plt.title('maximum value, ' + r'$R = $' \
+              + '{:.2f}'.format(correlation_max[1, 0]),
+              fontsize=FONT_SIZE)
+    plt.xlabel('label error', fontsize=FONT_SIZE)
+    plt.ylabel('$N$', fontsize=FONT_SIZE)
+    plt.ylim(0, 10500)
+
+    ax = plt.subplot(3, 1, 3)
+    ax_sum = plt.hist(np.abs(simple_metric_labels_sum-vals),
+             bins=hist_bins,
+             edgecolor='blue',
+             facecolor='blue',
+             align='left',
+             histtype='stepfilled',
+             alpha=0.25,
+             linewidth=2.0)
+    plt.title('sum of squares, ' + r'$R = $' \
+              + '{:.2f}'.format(correlation_sum[1, 0]),
+              fontsize=FONT_SIZE)
+    plt.xlabel('label error', fontsize=FONT_SIZE)
+    plt.ylabel('$N$', fontsize=FONT_SIZE)
+    plt.ylim(0, 10500)
+
+    plt.tight_layout()
     plt.show(block=False)
 
 
