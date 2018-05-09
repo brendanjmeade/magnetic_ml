@@ -4,6 +4,7 @@ monolpoles. Based on Roger Fu's Matlab script
 '''
 
 import pickle
+import sys
 import numpy as np
 import matplotlib
 from matplotlib import rc
@@ -106,8 +107,8 @@ def calc_feature_labels(field, n_bins):
 
 def main():
     '''Generate random fields'''
-    n_fields = 1000000
-    n_points = 50 # Roger says 2400
+    n_fields = 100
+    n_points = 2400 # Roger says 2400
     x_bound = 500.0e-6 # microns, Roger says make this 50-100 microns
     y_bound = x_bound
     z_raw = 110 # microns, -z-coordinate: make a volume 0-30 
@@ -120,10 +121,11 @@ def main():
     frames_moment_vector_sum_labels = np.zeros((n_fields, 3))
 
     for i in range(n_fields):
-        print(i+1)
+        sys.stdout.write('\r [ %d'%((i+1)/n_fields * 100)+'% ] ')
+        sys.stdout.flush()
         point_source = gen_point_source_parameters(n_points, x_bound, y_bound)
-        point_source = field_from_point_source_dict(point_source, x_grid, y_grid, z_raw)
-        frames_bzdip[i, :, :] = point_source['bz_dip']
+        # point_source = field_from_point_source_dict(point_source, x_grid, y_grid, z_raw)
+        # frames_bzdip[i, :, :] = point_source['bz_dip']
         frames_moment_scalar_sum[i] = np.sum(point_source['moment_scalar'])
         frames_moment_vector_sum[i, :] = np.sum(point_source['moment_vector'], 0)
 
@@ -133,7 +135,7 @@ def main():
     frames_moment_vector_sum_labels[:, 1] = calc_feature_labels(frames_moment_vector_sum[:, 1], n_bins).astype(int)
     frames_moment_vector_sum_labels[:, 2] = calc_feature_labels(frames_moment_vector_sum[:, 2], n_bins).astype(int)
     
-    np.savez('synthetics_100000.npz', frames_bzdip, frames_moment_scalar_sum, frames_moment_vector_sum,
+    np.savez('synthetics.npz', frames_bzdip, frames_moment_scalar_sum, frames_moment_vector_sum,
              frames_moment_scalar_sum_labels, frames_moment_vector_sum_labels)
 
 if __name__ == '__main__':
