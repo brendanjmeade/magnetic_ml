@@ -324,11 +324,81 @@ def plot_field():
     plt.show(block=False)
 
 
+def plot_field_noise():
+    '''Simple visualization'''
+    idx = 10
+    
+    with np.load('features_and_labels.npz') as data:
+        labels_balanced = data['labels_balanced']
+        frames_balanced = data['frames_balanced']
+        _frames_original = data['frames_original']
+
+    min_val = np.min(frames_balanced)
+    max_val = np.max(frames_balanced)
+    cbar_val = np.max(np.array([np.abs(min_val), max_val]))
+    scale_factor = np.round(np.log10(cbar_val))
+    cbar_val = cbar_val / (10**scale_factor)
+
+    plt.figure(figsize=(10, 3.5))
+    plt.subplot(1, 2, 1)
+    plt.imshow(frames_balanced[idx, :, :] / 10**(scale_factor),
+               interpolation='nearest',
+               cmap=cm.coolwarm,
+               origin='lower')
+    plt.clim(-cbar_val, cbar_val)
+    plt.plot(np.array([-50, 50, 50, -50, -50])*PIXELS/200 + PIXELS/2,
+             np.array([-50, -50, 50, 50, -50])*PIXELS/200 + PIXELS/2,
+             '--k',
+             linewidth=1.0)
+    plt.xticks([0, PIXELS-1], ['-100', '100'])
+    plt.yticks([0, PIXELS-1], ['-100', '100'])
+    plt.xlabel('$x \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    plt.ylabel('$y \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    
+    matplotlib.rc('xtick', labelsize=FONT_SIZE) 
+    matplotlib.rc('ytick', labelsize=FONT_SIZE) 
+
+    cbar = plt.colorbar(ticks=[-cbar_val, 0, cbar_val])
+    exponent_string = '$10^{' + str(scale_factor) + '}$' 
+    cbar.ax.set_ylabel(r'field strength (units ' + r'$\times$' + ' ' + exponent_string + ')', fontsize=14, rotation=90)
+    cbar.ax.tick_params(labelsize=14) 
+    plt.title('$\mathrm{label} \; = \; $' + str(labels_balanced[idx]), fontsize=14)
+    plt.show(block=False)
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(frames_balanced[idx, :, :] / 10**(scale_factor),
+               interpolation='nearest',
+               cmap=cm.coolwarm,
+               origin='lower')
+    plt.clim(-cbar_val, cbar_val)
+    plt.plot(np.array([-50, 50, 50, -50, -50])*PIXELS/200 + PIXELS/2,
+             np.array([-50, -50, 50, 50, -50])*PIXELS/200 + PIXELS/2,
+             '--k',
+             linewidth=1.0)
+    plt.xticks([0, PIXELS-1], ['-100', '100'])
+    plt.yticks([0, PIXELS-1], ['-100', '100'])
+    plt.xlabel('$x \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    plt.ylabel('$y \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    
+    matplotlib.rc('xtick', labelsize=FONT_SIZE) 
+    matplotlib.rc('ytick', labelsize=FONT_SIZE) 
+
+    cbar = plt.colorbar(ticks=[-cbar_val, 0, cbar_val])
+    exponent_string = '$10^{' + str(scale_factor) + '}$' 
+    cbar.ax.set_ylabel(r'field strength (units ' + r'$\times$' + ' ' + exponent_string + ')', fontsize=14, rotation=90)
+    cbar.ax.tick_params(labelsize=14) 
+    plt.title('$\mathrm{label} \; = \; $' + str(labels_balanced[idx]), fontsize=14)
+
+    plt.tight_layout()
+    plt.show(block=False)
+
+
 def main():
     # balance_classes()
     # learn_simple()
     # plot_field()
-    predict_simple()
+    plot_field_noise()
+    # predict_simple()
     # learn_noisy()
     
 
