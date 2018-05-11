@@ -397,8 +397,8 @@ def main():
     # balance_classes()
     # learn_simple()
     # plot_field()
-    plot_field_noise()
-    # predict_simple()
+    # plot_field_noise()
+    predict_simple()
     # learn_noisy()
     
 
