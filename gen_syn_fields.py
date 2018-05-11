@@ -143,13 +143,12 @@ def plot_field(grid):
     exponent_string = '$10^{' + str(scale_factor) + '}$' 
     cbar.ax.set_ylabel(r'field strength (units ' + r'$\times$' + ' ' + exponent_string + ')', fontsize=14, rotation=90)
     cbar.ax.tick_params(labelsize=14) 
-    # plt.title('$\mathrm{label} \; = \; $' + str(labels_balanced[idx]), fontsize=14)
     plt.show(block=False)
 
 
 def main():
     '''Generate random fields'''
-    n_fields = 10000
+    n_fields = 100000
     n_points = 2400 # Roger says 2400
     x_bound = 100.0e-6 # microns, Roger says make this 50-100 microns
     y_bound = x_bound
@@ -158,43 +157,30 @@ def main():
     x_grid, y_grid = calc_observation_grid(x_bound, y_bound)
 
     frames_bzdip = np.zeros((n_fields, PIXELS, PIXELS)) # make 300x300
-    frames_moment_scalar_sum = np.zeros(n_fields)
-    frames_moment_vector_sum = np.zeros((n_fields, 3))
-    frames_moment_vector_sum_labels = np.zeros((n_fields, 3))
+    frames_moment_scalar = np.zeros(n_fields)
+    frames_moment_vector = np.zeros((n_fields, 3))
 
     for i in range(n_fields):
-        sys.stdout.write('\r [ %d'%((i+1)/n_fields * 100)+'% ] ')
+        sys.stdout.write('\r [ %f'%((i+1)/n_fields * 100)+'% ] ')
         sys.stdout.flush()
         point_source = gen_point_source_parameters(n_points, x_bound, y_bound)
-        # point_source = field_from_point_source_dict(point_source, x_grid, y_grid, z_raw)
-        # frames_bzdip[i, :, :] = point_source['bz_dip']
-        # frames_moment_scalar_sum[i] = np.sum(point_source['moment_scalar'])
-        frames_moment_vector_sum[i, :] = np.sum(point_source['moment_vector'], 0)
-        frames_moment_scalar_sum[i] = np.linalg.norm(point_source['moment_vector'])
+        point_source = field_from_point_source_dict(point_source, x_grid, y_grid, z_raw)
+        frames_bzdip[i, :, :] = point_source['bz_dip']
+        frames_moment_vector[i, :] = np.sum(point_source['moment_vector'], 0)
+        frames_moment_scalar[i] = np.linalg.norm(frames_moment_vector[i, :])
 
-
-    # plot_field(frames_bzdip[i, :, :])
-
-    plt.close('all')
-    plt.figure()
-    plt.hist(frames_moment_scalar_sum, 30)
-    plt.ylabel('N')
-    plt.xlabel('moment vector magnitude')
-    plt.show(block=False)
-    import pdb; pdb.set_trace()
-
-    # Histograms and quantized labels
-    frames_moment_scalar_sum_labels = calc_feature_labels(frames_moment_scalar_sum, n_bins).astype(int)
-    frames_moment_vector_sum_labels[:, 0] = calc_feature_labels(frames_moment_vector_sum[:, 0], n_bins).astype(int)
-    frames_moment_vector_sum_labels[:, 1] = calc_feature_labels(frames_moment_vector_sum[:, 1], n_bins).astype(int)
-    frames_moment_vector_sum_labels[:, 2] = calc_feature_labels(frames_moment_vector_sum[:, 2], n_bins).astype(int)
+    # plt.close('all')
+    # plt.figure()
+    # plt.hist(frames_moment_scalar, np.logspace(-15, -10, 200))
+    # plt.ylabel('N')
+    # plt.xlabel('moment vector magnitude')
+    # plt.show(block=False)
+    # import pdb; pdb.set_trace()
     
     np.savez('synthetics.npz',
              frames_bzdip,
-             frames_moment_scalar_sum,
-             frames_moment_vector_sum,
-             frames_moment_scalar_sum_labels,
-             frames_moment_vector_sum_labels)
+             frames_moment_scalar,
+             frames_moment_vector)
 
 if __name__ == '__main__':
     main()
