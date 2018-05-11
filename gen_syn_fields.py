@@ -8,12 +8,15 @@ import sys
 import numpy as np
 import matplotlib
 from matplotlib import rc
+from matplotlib import cm
 import matplotlib.pyplot as plt
 
 # Constants
 MU0 = 4 * np.pi * 1e-7
-LIFTOFF = 1e-6 # Roger sez this should be: 5e-6
+LIFTOFF = 5e-6 # Roger sez this should be: 5e-6
 LEVELS = np.linspace(-1e-6, 1e-6, 30)
+PIXELS = 300
+FONT_SIZE = 14
 
 
 def calc_dipole_parameters(declination, inclination, moment_scalar):
@@ -30,8 +33,8 @@ def calc_dipole_parameters(declination, inclination, moment_scalar):
 
 def calc_observation_grid(x_bound, y_bound):
     '''Generate observation coordinates'''
-    n_x_points = 64
-    n_y_points = 64
+    n_x_points = PIXELS
+    n_y_points = PIXELS
     x_grid, y_grid = np.meshgrid(np.linspace(-2 * x_bound, 2 * x_bound, n_x_points),
                                  np.linspace(-2 * y_bound, 2 * y_bound, n_y_points))
     return x_grid, y_grid
@@ -39,7 +42,8 @@ def calc_observation_grid(x_bound, y_bound):
 
 def calc_point_source_field(moment_vector, x_source, y_source, z_raw, x_grid, y_grid):
     '''Compute the field of a magnetic dipole point source'''
-    z_observed = z_raw * LIFTOFF
+    # z_observed = z_raw * LIFTOFF
+    z_observed = 30e-6 * np.random.uniform(1) + LIFTOFF
     squared_distance = (x_grid-x_source)**2.0 + \
                        (y_grid-y_source)**2.0 + \
                        z_observed**2.0
@@ -83,6 +87,11 @@ def gen_point_source_parameters(n_points, x_bound, y_bound):
                                                                      point_source['inclination'][i],
                                                                      point_source['moment_scalar'][i])
 
+    # Rescale moment_vector by a random number
+    point_source['moment_vector'][i, :] = 1e4 * np.random.rand(1) * point_source['moment_vector'][i, :] 
+
+
+
     return point_source
 
 def field_from_point_source_dict(point_source, x_grid, y_grid, z_raw):
@@ -105,17 +114,50 @@ def calc_feature_labels(field, n_bins):
     return np.digitize(field, bins)
 
 
+def plot_field(grid):
+    '''Simple visualization'''
+    min_val = np.min(grid)
+    max_val = np.max(grid)
+    cbar_val = np.max(np.array([np.abs(min_val), max_val]))
+    scale_factor = np.round(np.log10(cbar_val))
+    cbar_val = cbar_val / (10**scale_factor)
+
+    plt.imshow(grid / 10**(scale_factor),
+               interpolation='nearest',
+               cmap=cm.coolwarm,
+               origin='lower')
+    plt.clim(-cbar_val, cbar_val)
+    plt.plot(np.array([-50, 50, 50, -50, -50])*PIXELS/200 + PIXELS/2,
+             np.array([-50, -50, 50, 50, -50])*PIXELS/200 + PIXELS/2,
+             '--k',
+             linewidth=1.0)
+    plt.xticks([0, PIXELS-1], ['-100', '100'])
+    plt.yticks([0, PIXELS-1], ['-100', '100'])
+    plt.xlabel('$x \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    plt.ylabel('$y \; \mathrm{(microns)}$', fontsize=FONT_SIZE)
+    
+    matplotlib.rc('xtick', labelsize=FONT_SIZE) 
+    matplotlib.rc('ytick', labelsize=FONT_SIZE) 
+
+    cbar = plt.colorbar(ticks=[-cbar_val, 0, cbar_val])
+    exponent_string = '$10^{' + str(scale_factor) + '}$' 
+    cbar.ax.set_ylabel(r'field strength (units ' + r'$\times$' + ' ' + exponent_string + ')', fontsize=14, rotation=90)
+    cbar.ax.tick_params(labelsize=14) 
+    # plt.title('$\mathrm{label} \; = \; $' + str(labels_balanced[idx]), fontsize=14)
+    plt.show(block=False)
+
+
 def main():
     '''Generate random fields'''
-    n_fields = 100
+    n_fields = 10000
     n_points = 2400 # Roger says 2400
-    x_bound = 500.0e-6 # microns, Roger says make this 50-100 microns
+    x_bound = 100.0e-6 # microns, Roger says make this 50-100 microns
     y_bound = x_bound
-    z_raw = 110 # microns, -z-coordinate: make a volume 0-30 
-    n_bins = 10 # Roger wants 1 degree...I say 10 degrees
+    z_raw = 0 # microns, -z-coordinate: make a volume 0-30 
+    n_bins = 100 # Roger wants 1 degree...I say 10 degrees
     x_grid, y_grid = calc_observation_grid(x_bound, y_bound)
 
-    frames_bzdip = np.zeros((n_fields, 64, 64)) # make 300x300
+    frames_bzdip = np.zeros((n_fields, PIXELS, PIXELS)) # make 300x300
     frames_moment_scalar_sum = np.zeros(n_fields)
     frames_moment_vector_sum = np.zeros((n_fields, 3))
     frames_moment_vector_sum_labels = np.zeros((n_fields, 3))
@@ -126,8 +168,20 @@ def main():
         point_source = gen_point_source_parameters(n_points, x_bound, y_bound)
         # point_source = field_from_point_source_dict(point_source, x_grid, y_grid, z_raw)
         # frames_bzdip[i, :, :] = point_source['bz_dip']
-        frames_moment_scalar_sum[i] = np.sum(point_source['moment_scalar'])
+        # frames_moment_scalar_sum[i] = np.sum(point_source['moment_scalar'])
         frames_moment_vector_sum[i, :] = np.sum(point_source['moment_vector'], 0)
+        frames_moment_scalar_sum[i] = np.linalg.norm(point_source['moment_vector'])
+
+
+    # plot_field(frames_bzdip[i, :, :])
+
+    plt.close('all')
+    plt.figure()
+    plt.hist(frames_moment_scalar_sum, 30)
+    plt.ylabel('N')
+    plt.xlabel('moment vector magnitude')
+    plt.show(block=False)
+    import pdb; pdb.set_trace()
 
     # Histograms and quantized labels
     frames_moment_scalar_sum_labels = calc_feature_labels(frames_moment_scalar_sum, n_bins).astype(int)
@@ -135,8 +189,12 @@ def main():
     frames_moment_vector_sum_labels[:, 1] = calc_feature_labels(frames_moment_vector_sum[:, 1], n_bins).astype(int)
     frames_moment_vector_sum_labels[:, 2] = calc_feature_labels(frames_moment_vector_sum[:, 2], n_bins).astype(int)
     
-    np.savez('synthetics.npz', frames_bzdip, frames_moment_scalar_sum, frames_moment_vector_sum,
-             frames_moment_scalar_sum_labels, frames_moment_vector_sum_labels)
+    np.savez('synthetics.npz',
+             frames_bzdip,
+             frames_moment_scalar_sum,
+             frames_moment_vector_sum,
+             frames_moment_scalar_sum_labels,
+             frames_moment_vector_sum_labels)
 
 if __name__ == '__main__':
     main()
