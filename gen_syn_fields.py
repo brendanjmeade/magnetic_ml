@@ -146,9 +146,9 @@ def plot_field(grid):
     plt.show(block=False)
 
 
-def main():
+def main(file_name):
     '''Generate random fields'''
-    n_fields = 100000
+    n_fields = 3
     n_points = 2400 # Roger says 2400
     x_bound = 100.0e-6 # microns, Roger says make this 50-100 microns
     y_bound = x_bound
@@ -169,6 +169,7 @@ def main():
         frames_moment_vector[i, :] = np.sum(point_source['moment_vector'], 0)
         frames_moment_scalar[i] = np.linalg.norm(frames_moment_vector[i, :])
 
+    print(' ')
     # plt.close('all')
     # plt.figure()
     # plt.hist(frames_moment_scalar, np.logspace(-15, -10, 200))
@@ -177,10 +178,10 @@ def main():
     # plt.show(block=False)
     # import pdb; pdb.set_trace()
     
-    np.savez('synthetics.npz',
+    np.savez(file_name + '.npz',
              frames_bzdip,
              frames_moment_scalar,
              frames_moment_vector)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])
